@@ -19,7 +19,7 @@
   "homepage": "https://github.com/Reaking1/tiktok-bot#readme",
   "description": "",
   "dependencies": {
-    "@elevenlabs/client": "^0.12.1",
+    "@elevenlabs/elevenlabs-js": "^2.28.0",
     "axios": "^1.13.2",
     "chalk": "^5.6.2",
     "dotenv": "^17.2.3",

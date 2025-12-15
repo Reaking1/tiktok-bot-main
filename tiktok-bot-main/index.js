@@ -1,4 +1,4 @@
-import "dotenv/config"; // MUST be first
+import "./bootstrap.js"; // MUST be first
 
 import { TikTokLiveConnection } from "tiktok-live-connector";
 import chalk from "chalk";
