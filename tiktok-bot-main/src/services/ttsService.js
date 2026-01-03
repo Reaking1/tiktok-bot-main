@@ -1,35 +1,37 @@
 import fs from "fs";
 import path from "path";
 import axios from "axios";
-import { fileURLToPath } from "url";
 import { logger } from "../utils/logger.js";
 import { playAudio } from "../utils/audioPlayer.js";
 
-// ES module dirname fix
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Env vars (already loaded by entry file)
+// ===== ENV VARS =====
 const API_KEY = process.env.ELEVENLABS_API_KEY;
 const DEFAULT_VOICE = process.env.ELEVENLABS_DEFAULT_VOICE;
 
-// 🔐 Fail fast if key missing
+// Disable audio playback in Docker / CI
+const ENABLE_AUDIO_PLAYBACK = process.env.ENABLE_AUDIO_PLAYBACK === "true";
+
+// ===== VALIDATION =====
 if (!API_KEY) {
-  throw new Error("❌ ELEVENLABS_API_KEY is missing. Check your .env file.");
+  logger.error("❌ ELEVENLABS_API_KEY is missing");
+  throw new Error("Missing ELEVENLABS_API_KEY");
 }
 
 if (!DEFAULT_VOICE) {
-  throw new Error("❌ ELEVENLABS_DEFAULT_VOICE is missing.");
+  logger.error("❌ ELEVENLABS_DEFAULT_VOICE is missing");
+  throw new Error("Missing ELEVENLABS_DEFAULT_VOICE");
 }
 
-// Audio output directory
-const AUDIO_OUTPUT = path.join(__dirname, "../../audio");
+// ===== AUDIO OUTPUT PATH (Docker-safe) =====
+// process.cwd() === /app inside Docker
+const AUDIO_OUTPUT = path.join(process.cwd(), "audio");
+
 if (!fs.existsSync(AUDIO_OUTPUT)) {
   fs.mkdirSync(AUDIO_OUTPUT, { recursive: true });
 }
 
 /**
- * Generate TTS using ElevenLabs (2025 API)
+ * Generate TTS using ElevenLabs
  */
 export async function speak(text, voiceId = DEFAULT_VOICE) {
   try {
@@ -49,7 +51,7 @@ export async function speak(text, voiceId = DEFAULT_VOICE) {
         headers: {
           "xi-api-key": API_KEY,
           "Content-Type": "application/json",
-          "Accept": "audio/mpeg",
+          Accept: "audio/mpeg",
         },
         responseType: "arraybuffer",
         timeout: 30_000,
@@ -62,7 +64,11 @@ export async function speak(text, voiceId = DEFAULT_VOICE) {
     fs.writeFileSync(filePath, response.data);
 
     logger.success(`🎧 ElevenLabs TTS saved: ${filePath}`);
-    await playAudio(filePath);
+
+    // 🔇 Only play audio if explicitly enabled
+    if (ENABLE_AUDIO_PLAYBACK) {
+      await playAudio(filePath);
+    }
 
     return filePath;
   } catch (error) {

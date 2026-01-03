@@ -1,5 +1,5 @@
 # 1️⃣ Base image (LTS Node, stable)
-FROM node:20-alpine
+FROM node:20-slim
 
 # 2️⃣ Set working directory
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # 4️⃣ Install dependencies
-RUN npm ci --only=production
+RUN npm ci --omit=dev
 
 # 5️⃣ Copy app source
 COPY . .
