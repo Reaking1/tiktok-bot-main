@@ -1,0 +1,13 @@
+services:
+  tiktok-bot:
+    image: tiktok-bot
+    container_name: tiktok-bot
+    restart: unless-stopped
+
+    env_file:
+      - .env.docker
+
+    volumes:
+      - ./audio:/app/audio
+
+    command: node index.js

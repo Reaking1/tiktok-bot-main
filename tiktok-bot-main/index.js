@@ -11,30 +11,31 @@ import { logger } from "./src/utils/logger.js";
 const tiktokUsername = config.tiktokUsername;
 
 const tiktokLive = new TikTokLiveConnection(tiktokUsername, {
-    enableWebsocketFallback: true
+  enableWebsocketFallback: true,
 });
 
 // Connect
-tiktokLive.connect()
-    .then(state => {
-        logger.success(`🎉 Connected to @${tiktokUsername}'s LIVE!`);
-        logger.info(`👀 Viewers: ${state.viewerCount}`);
-    })
-    .catch(err => logger.error(`❌ Failed to connect: ${err.message}`));
+tiktokLive
+  .connect()
+  .then((state) => {
+    logger.success(`🎉 Connected to @${tiktokUsername}'s LIVE!`);
+    logger.info(`👀 Viewers: ${state.viewerCount}`);
+  })
+  .catch((err) => logger.error(`❌ Failed to connect: ${err.message}`));
 
 // Chat event
 tiktokLive.on("chat", async (data) => {
-    logger.info(`💬 ${data.uniqueId}: ${data.comment}`);
-    await onChat(data.uniqueId, data.comment);
+  logger.info(`💬 ${data.uniqueId}: ${data.comment}`);
+  await onChat(data.uniqueId, data.comment);
 });
 
 // Gift event
 tiktokLive.on("gift", async (data) => {
-    logger.event("GIFT", data.giftName);
-    await onGift(data);
+  logger.event("GIFT", data.giftName);
+  await onGift(data);
 });
 
 // Like event
 tiktokLive.on("like", (data) => {
-    logger.event("LIKE", data.uniqueId);
+  logger.event("LIKE", data.uniqueId);
 });

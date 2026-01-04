@@ -1,49 +1,48 @@
-const logger = require("../utils/logger");
-const cooldown = require("../utils/cooldown");
-const TTSService = require("../services/ttsService");
+import {
+  isOnCooldown,
+  addCooldown,
+  clearCooldown,
+  clearAllCooldown,
+} from "../utils/cooldown.js";
+import { logger } from "../utils/logger.js";
+import { speak } from "../services/ttsService.js"; // assuming playTTS is now speak
 
 class GiftHandler {
-    constructor(options = {}) {
-        this.tts = options.ttsService || new TTSService();
-        this.cooldown = options.cooldown || cooldown;
-        this.giftCooldown = options.giftCooldown || 5000;// 5 seconds by default
-    }
- /**
-     * Handle TikTok gift event
-     * @param {object} data - Raw gift event data from TikTok
-     */
+  constructor(options = {}) {
+    this.tts = options.ttsService || { playTTS: speak };
+    this.cooldownDuration = options.giftCooldown || 5; // in seconds
+  }
 
- async handleGift(data) {
+  /**
+   * Handle TikTok gift event
+   * @param {object} data - Raw gift event data from TikTok
+   */
+  async handleGift(data) {
     try {
-        //Extract useful info
-        const username = data?.uniqueId || "Unknown user";
-        const giftName = data?.giftName || "Gift";
-        const repeatEnd = data?.repeatEnd || false;
-        const finalCount = data?.repeatCount || 1;
+      const username = data?.uniqueId || "Unknown user";
+      const giftName = data?.giftName || "Gift";
+      const repeatEnd = data?.repeatEnd || false;
+      const finalCount = data?.repeatCount || 1;
 
-                // Avoid processing gifts before combo is finalized  
-                if(!repeatEnd) return;
+      if (!repeatEnd) return;
 
-                //Prevent spam using cooldown
-                if(this.cooldown.isOnCooldown(username)) {
-                    logger.info(`Cooldown active for ${username}, skipping gift response.`);
-                    return;
-                }
-                this.cooldown.addCooldown(username, this.giftCooldown);
-                logger.info(`🎁 Gift from ${username}: ${giftName} x${finalCount}`);
-                
+      if (isOnCooldown(username, this.cooldownDuration)) {
+        logger.info(`Cooldown active for ${username}, skipping gift response.`);
+        return;
+      }
 
-                //Create TTS message
-                const message = `Thank you ${username} for the ${giftName}! You are awesome!`;
+      // Set cooldown manually if you want extra control
+      // addCooldown(username, this.cooldownDuration);
 
+      logger.info(`🎁 Gift from ${username}: ${giftName} x${finalCount}`);
 
-                //Play TTS
-                await this.tts.playTTS(message);
+      const message = `Thank you ${username} for the ${giftName}! You are awesome!`;
+
+      await this.tts.playTTS(message);
     } catch (err) {
-   logger.error("Failed to process gift", err);
+      logger.error("Failed to process gift", err);
     }
- }
-
+  }
 }
 
-module.exports = GiftHandler;
+export { GiftHandler };
