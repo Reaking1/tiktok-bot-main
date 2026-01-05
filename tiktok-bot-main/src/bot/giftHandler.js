@@ -1,38 +1,35 @@
-import {
-  isOnCooldown,
-  addCooldown,
-  clearCooldown,
-  clearAllCooldown,
-} from "../utils/cooldown.js";
+import { isOnCooldown } from "../utils/cooldown.js";
 import { logger } from "../utils/logger.js";
-import { speak } from "../services/ttsService.js"; // assuming playTTS is now speak
+import { speak } from "../services/ttsService.js";
 
+/**
+ * GiftHandler encapsulates all gift logic
+ */
 class GiftHandler {
   constructor(options = {}) {
     this.tts = options.ttsService || { playTTS: speak };
-    this.cooldownDuration = options.giftCooldown || 5; // in seconds
+    this.cooldownSeconds = options.giftCooldown ?? 5; // seconds
   }
 
   /**
    * Handle TikTok gift event
-   * @param {object} data - Raw gift event data from TikTok
+   * @param {object} data
    */
   async handleGift(data) {
     try {
       const username = data?.uniqueId || "Unknown user";
       const giftName = data?.giftName || "Gift";
-      const repeatEnd = data?.repeatEnd || false;
-      const finalCount = data?.repeatCount || 1;
+      const repeatEnd = data?.repeatEnd ?? false;
+      const finalCount = data?.repeatCount ?? 1;
 
+      // Only react when gift combo is finished
       if (!repeatEnd) return;
 
-      if (isOnCooldown(username, this.cooldownDuration)) {
-        logger.info(`Cooldown active for ${username}, skipping gift response.`);
+      // Cooldown protection
+      if (isOnCooldown(username, this.cooldownSeconds)) {
+        logger.info(`Cooldown active for ${username}, skipping gift.`);
         return;
       }
-
-      // Set cooldown manually if you want extra control
-      // addCooldown(username, this.cooldownDuration);
 
       logger.info(`🎁 Gift from ${username}: ${giftName} x${finalCount}`);
 
@@ -45,4 +42,18 @@ class GiftHandler {
   }
 }
 
+/* --------------------------------------------------
+   SINGLETON + EVENT HANDLER EXPORT
+-------------------------------------------------- */
+
+const giftHandler = new GiftHandler();
+
+/**
+ * This is what index.js imports
+ */
+export async function onGift(data) {
+  return giftHandler.handleGift(data);
+}
+
+// Optional named export if you ever need the class
 export { GiftHandler };
