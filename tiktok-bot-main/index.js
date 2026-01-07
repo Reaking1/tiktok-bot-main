@@ -6,6 +6,7 @@ import config from "./config/default.js";
 import { onChat } from "./src/bot/chatHandler.js";
 import { onGift } from "./src/bot/giftHandler.js";
 import { logger } from "./src/utils/logger.js";
+import { getUser, recordChat, recordLike } from "./src/utils/userStore.js";
 
 // Create the connection
 const tiktokUsername = config.tiktokUsername;
@@ -18,24 +19,34 @@ const tiktokLive = new TikTokLiveConnection(tiktokUsername, {
 tiktokLive
   .connect()
   .then((state) => {
-    logger.success(`🎉 Connected to @${tiktokUsername}'s LIVE!`);
-    logger.info(`👀 Viewers: ${state.viewerCount}`);
+    logger.success(`🎉 Connected to @${config.tiktokUsername}'s LIVE!`);
+    logger.info(`👀 Viewers: ${state.viewerCount ?? "N/A"}`);
   })
   .catch((err) => logger.error(`❌ Failed to connect: ${err.message}`));
 
 // Chat event
 tiktokLive.on("chat", async (data) => {
-  logger.info(`💬 ${data.uniqueId}: ${data.comment}`);
-  await onChat(data.uniqueId, data.comment);
+  const user = getUser(data);
+  recordChat(user);
+
+  logger.info("💬 ${user.name}: ${data.comment}");
+  await onChat(user, data.comment);
 });
 
 // Gift event
 tiktokLive.on("gift", async (data) => {
-  logger.event("GIFT", data.giftName);
-  await onGift(data);
+  const user = getUser(data);
+
+  logger.event("GIFT", `${user.name} sent ${data.giftName}`);
+  await onGift(user, data);
 });
 
 // Like event
 tiktokLive.on("like", (data) => {
-  logger.event("LIKE", data.uniqueId);
+  const user = getUser(data);
+
+  //TikTok sends LikeCount sometimes
+  const likeAmount = data.likeCount || 1;
+  recordLike(user, likeAmount);
+  logger.event("LIKE", `${user.name}  → ${user.likes} total likes `);
 });
