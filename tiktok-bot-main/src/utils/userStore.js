@@ -14,7 +14,12 @@ export function getUser(data) {
       name: "Guest",
       likes: 0,
       chats: 0,
+      giftTotal: 0,
+      isSubscriber: false,
+      isTopGifter: false,
       lastSpokeAt: 0,
+      lastSeen: Date.now(),
+      lastAIReplyAt: 0,
     };
   }
 
@@ -24,11 +29,19 @@ export function getUser(data) {
       name: data.uniqueId || data.nickname || "Guest",
       likes: 0,
       chats: 0,
+      giftTotal: 0,
+      isSubscriber: false,
+      isTopGifter: false,
       lastSpokeAt: 0,
+      lastSeen: Date.now(),
+      lastAIReplyAt: 0,
     });
   }
 
-  return users.get(id);
+  const user = users.get(id);
+  user.lastSeen = Date.now();
+
+  return user;
 }
 
 /**
@@ -50,4 +63,37 @@ export function recordLike(user, amount = 1) {
  */
 export function markSpoken(user) {
   user.lastSpokeAt = Date.now();
+}
+
+/**
+ * Add gift value
+ */
+export function recordGift(user, amount = 1) {
+  user.giftTotal += amount;
+
+  //Example threshold
+  if (user.giftTotal >= 100) {
+    user.isTopGifter = true;
+  }
+}
+
+/**
+ * Update last spoken timestamp
+ */
+export function markSpoken(user) {
+  user.lastSpokeAt = Date.now();
+}
+
+/**
+ * Update subscriber status
+ */
+export function markSubscriber(user, data) {
+  user.isSubscriber = !!data.isSubscriber;
+}
+
+/**
+ * Update the AI reply
+ */
+export function markAIReply(user) {
+  user.lastAIReplyAt = Date.now();
 }
