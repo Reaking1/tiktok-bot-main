@@ -7,6 +7,11 @@ import { onChat } from "./src/bot/chatHandler.js";
 import { onGift } from "./src/bot/giftHandler.js";
 import { logger } from "./src/utils/logger.js";
 import { getUser, recordChat, recordLike } from "./src/utils/userStore.js";
+import {
+  handleChatMilestone,
+  handleGiftMilestone,
+  handleLikeMilestone,
+} from "./src/bot/milestoneHnadler.js";
 
 // Create the connection
 const tiktokUsername = config.tiktokUsername;
@@ -31,6 +36,8 @@ tiktokLive.on("chat", async (data) => {
 
   logger.info("💬 ${user.name}: ${data.comment}");
   await onChat(user, data.comment);
+
+  await handleChatMilestone(user);
 });
 
 // Gift event
@@ -39,14 +46,19 @@ tiktokLive.on("gift", async (data) => {
 
   logger.event("GIFT", `${user.name} sent ${data.giftName}`);
   await onGift(user, data);
+
+  await handleGiftMilestone(user);
 });
 
 // Like event
-tiktokLive.on("like", (data) => {
+tiktokLive.on("like", async (data) => {
   const user = getUser(data);
 
   //TikTok sends LikeCount sometimes
   const likeAmount = data.likeCount || 1;
   recordLike(user, likeAmount);
+
   logger.event("LIKE", `${user.name}  → ${user.likes} total likes `);
+
+  await handleLikeMilestone(user);
 });
