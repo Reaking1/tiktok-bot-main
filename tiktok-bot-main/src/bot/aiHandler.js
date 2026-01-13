@@ -2,7 +2,7 @@ import axios from "axios";
 import { logger } from "../utils/logger.js";
 
 export class AIHAndler {
-  constructor(apiKey, model = "gpt-4o-mini") {
+  constructor(apiKey, model = "gpt-3.5-turbo") {
     if (!apiKey) throw new Error("AI API key is missing");
     this.apiKey = apiKey;
     this.model = model;
