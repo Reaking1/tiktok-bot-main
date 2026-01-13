@@ -1,5 +1,5 @@
-import { logger } from "../utils/logger";
-import { recordLike } from "../utils/userStore";
+import { logger } from "../utils/logger.js";
+import { recordLike } from "../utils/userStore.js";
 
 const LIKE_MILESTONES = [10, 25, 50, 100];
 

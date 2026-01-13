@@ -59,13 +59,6 @@ export function recordLike(user, amount = 1) {
 }
 
 /**
- * Update last spoken timestamp
- */
-export function markSpoken(user) {
-  user.lastSpokeAt = Date.now();
-}
-
-/**
  * Add gift value
  */
 export function recordGift(user, amount = 1) {

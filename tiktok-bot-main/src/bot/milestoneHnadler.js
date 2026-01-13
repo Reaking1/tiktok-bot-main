@@ -1,6 +1,6 @@
 import { speak } from "../services/ttsService.js";
-import { logger } from "./logger.js";
-import { markAIReply } from "./userStore.js";
+import { logger } from "../utils/logger.js";
+import { markAIReply } from "../utils/userStore.js";
 
 const LIKE_MILESTONES = [10, 50, 100, 250, 500];
 const CHAT_MILESTONES = [5, 20];
