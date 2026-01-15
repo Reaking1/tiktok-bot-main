@@ -1,64 +1,52 @@
-import "./bootstrap.js"; // MUST be first
+import "./bootstrap.js";
 
 import { TikTokLiveConnection } from "tiktok-live-connector";
-import chalk from "chalk";
 import config from "./config/default.js";
+import { logger } from "./src/utils/logger.js";
+import { getUser, recordLike, recordGift } from "./src/utils/userStore.js";
 import { onChat } from "./src/bot/chatHandler.js";
 import { onGift } from "./src/bot/giftHandler.js";
-import { logger } from "./src/utils/logger.js";
-import { getUser, recordChat, recordLike } from "./src/utils/userStore.js";
 import {
   handleChatMilestone,
   handleGiftMilestone,
   handleLikeMilestone,
 } from "./src/bot/milestoneHnadler.js";
 
-// Create the connection
-const tiktokUsername = config.tiktokUsername;
-
-const tiktokLive = new TikTokLiveConnection(tiktokUsername, {
+const tiktokLive = new TikTokLiveConnection(config.tiktokUsername, {
   enableWebsocketFallback: true,
 });
 
-// Connect
 tiktokLive
   .connect()
   .then((state) => {
-    logger.success(`🎉 Connected to @${config.tiktokUsername}'s LIVE!`);
+    logger.success(`🎉 Connected to @${config.tiktokUsername}`);
     logger.info(`👀 Viewers: ${state.viewerCount ?? "N/A"}`);
   })
-  .catch((err) => logger.error(`❌ Failed to connect: ${err.message}`));
+  .catch((err) => logger.error(err.message));
 
-// Chat event
+// Chat
 tiktokLive.on("chat", async (data) => {
-  const user = getUser(data);
-  recordChat(user);
-
-  logger.info(`💬 ${user.name}: ${data.comment}`);
-  await onChat(user, data.comment);
-
-  await handleChatMilestone(user);
+  await onChat(data);
 });
 
-// Gift event
+// Like
+tiktokLive.on("like", async (data) => {
+  const user = getUser(data);
+  const amount = data.likeCount || 1;
+
+  recordLike(user, amount);
+  logger.event("LIKE", `${user.name} → ${user.likes}`);
+
+  await handleLikeMilestone(user);
+});
+
+// Gift
 tiktokLive.on("gift", async (data) => {
   const user = getUser(data);
 
+  recordGift(user, data.diamondCount || 1);
   logger.event("GIFT", `${user.name} sent ${data.giftName}`);
+
   await onGift(user, data);
-
   await handleGiftMilestone(user);
-});
-
-// Like event
-tiktokLive.on("like", async (data) => {
-  const user = getUser(data);
-
-  //TikTok sends LikeCount sometimes
-  const likeAmount = data.likeCount || 1;
-  recordLike(user, likeAmount);
-
-  logger.event("LIKE", `${user.name}  → ${user.likes} total likes `);
-
-  await handleLikeMilestone(user);
 });

@@ -8,16 +8,15 @@ export async function onChat(data) {
   const user = getUser(data);
   recordChat(user);
 
-  const message = data.comment?.toLowerCase() || "";
+  const message = data.comment?.trim() || "";
 
   const emoji = user.isSubscriber ? "👻✨" : user.isTopGifter ? "👻🔥" : "👻";
 
   logger.info(`${emoji} ${user.name}: ${message}`);
 
-  // Ignore empty or non-question messages
-  if (!message || !message.includes("?")) return;
+  // Only answer questions
+  if (!message.includes("?")) return;
 
-  // AI permission gate
   const gate = canUseAI(user);
   if (!gate.allowed) {
     logger.info(`🤖 AI blocked for ${user.name}: ${gate.reason}`);
@@ -25,6 +24,8 @@ export async function onChat(data) {
   }
 
   const aiReply = await generateAIResponse(message);
+  if (!aiReply) return;
+
   await speak(aiReply);
   markAIReply(user);
 }

@@ -9,7 +9,7 @@ const GIFT_MILESTONES = [50, 100, 250];
 export async function handleLikeMilestone(user) {
   if (!LIKE_MILESTONES.includes(user.likes)) return;
 
-  const message = `🔥 ${user.name} just hit ${user.likes} likes! Thank you for the support!`;
+  const message = `🔥 ${user.name} just hit ${user.likes} likes!`;
   logger.success(message);
 
   await speak(message);
@@ -19,7 +19,7 @@ export async function handleLikeMilestone(user) {
 export async function handleChatMilestone(user) {
   if (!CHAT_MILESTONES.includes(user.chats)) return;
 
-  const message = `👻 ${user.name} is active in the chat! Appreciate you being here.`;
+  const message = `👻 ${user.name} is active in the chat!`;
   logger.success(message);
 
   await speak(message);
@@ -29,7 +29,7 @@ export async function handleChatMilestone(user) {
 export async function handleGiftMilestone(user) {
   if (!GIFT_MILESTONES.includes(user.giftTotal)) return;
 
-  const message = `🎁 Massive thanks to ${user.name} for incredible support!`;
+  const message = `🎁 Massive thanks to ${user.name} for the support!`;
   logger.success(message);
 
   await speak(message);
