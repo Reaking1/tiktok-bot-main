@@ -14,7 +14,7 @@ export function canUseAI(user) {
 
   //Cooldown
   const now = Date.now();
-  if (now - user.lastAIReply < AI_COOLDOWN_MS) {
+  if (now - user.lastAIReplyAt < AI_COOLDOWN_MS) {
     return { allowed: false, reason: "cooldown" };
   }
   return { allowed: true };

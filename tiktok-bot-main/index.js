@@ -34,7 +34,7 @@ tiktokLive.on("chat", async (data) => {
   const user = getUser(data);
   recordChat(user);
 
-  logger.info("💬 ${user.name}: ${data.comment}");
+  logger.info(`💬 ${user.name}: ${data.comment}`);
   await onChat(user, data.comment);
 
   await handleChatMilestone(user);

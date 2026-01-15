@@ -1,4 +1,3 @@
-// src/services/aiService.js
 import OpenAI from "openai";
 import { logger } from "../utils/logger.js";
 
@@ -7,33 +6,38 @@ const client = new OpenAI({
 });
 
 /**
- * Generate an AI response for TikTok chat
- * @param {string} message
+ * Generate an AI response
+ * @param {string} prompt
  * @returns {Promise<string>}
  */
-export async function generateAIResponse(message) {
-  try {
-    if (!message || message.length < 2) {
-      return "";
-    }
+export async function generateAIResponse(prompt) {
+  if (!prompt || prompt.trim().length < 2) {
+    return "";
+  }
 
-    const response = await client.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
+  try {
+    const response = await client.responses.create({
+      model: "gpt-4.1-mini", // cheaper + better than 3.5
+      input: [
         {
           role: "system",
           content:
-            "You are a witty TikTok assistant. Keep replies short and friendly.",
+            "You are a TikTok livestream assistant. Replies must be short, friendly, and spoken aloud.",
         },
-        { role: "user", content: message },
+        {
+          role: "user",
+          content: prompt,
+        },
       ],
-      max_tokens: 50,
+      max_output_tokens: 60,
       temperature: 0.7,
     });
 
-    return response.choices?.[0]?.message?.content.trim() || "";
-  } catch (error) {
-    logger.error(`AI error: ${error.message}`);
-    return "👻 I got confused for a second...";
+    return (
+      response.output_text?.trim() || "👻 I’m not sure how to answer that."
+    );
+  } catch (err) {
+    logger.error(`AI error: ${err.message}`);
+    return "👻 My brain lagged for a second.";
   }
 }
