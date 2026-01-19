@@ -1,19 +1,26 @@
 import { logger } from "../utils/logger.js";
-import { recordLike } from "../utils/userStore.js";
+import {
+  recordStreamLikes,
+  hasHitLikeMilestone,
+  markLikeMilestone,
+} from "../utils/streamStore.js";
+// import { speak } from "../services/ttsService.js";
 
-const LIKE_MILESTONES = [10, 25, 50, 100];
+const LIKE_MILESTONES = [100, 500, 1000, 2000, 5000];
 
-export async function onLike(user, likeAmount = 1) {
-  recordLike(user, likeAmount);
+export async function onLike(data) {
+  const amount = data.likeCount || 1;
+  const totalLikes = recordStreamLikes(amount);
 
   for (const milestone of LIKE_MILESTONES) {
-    if (user.likes >= milestone && !user.hitLikeMilestones.has(milestone)) {
-      user.hitLikeMilestones.add(milestone);
+    if (totalLikes >= milestone && !hasHitLikeMilestone(milestone)) {
+      markLikeMilestone(milestone);
 
-      logger.success(`❤️ ${user.name} reached ${milestone} likes!`);
+      const message = `❤️ Thank you for ${milestone.toLocaleString()} likes!`;
+      logger.success(message);
 
-      // later:
-      // await speak(`Thank you ${user.name} for ${milestone} likes!`)
+      // Optional TTS later:
+      // await speak(message);
     }
   }
 }

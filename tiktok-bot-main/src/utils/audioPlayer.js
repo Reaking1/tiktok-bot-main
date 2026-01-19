@@ -2,26 +2,36 @@ import player from "play-sound";
 import { logger } from "./logger.js";
 
 const audioPlayer = player();
+const ENABLE_AUDIO = process.env.ENABLE_AUDIO_PLAYBACK === "true"; // must explicitly be "true"
 
-// Read env once
-const ENABLE_AUDIO = process.env.ENABLE_AUDIO_PLAYBACK !== "false";
-
+/**
+ * Play audio file
+ * @param {string} filePath
+ */
 export function playAudio(filePath) {
   return new Promise((resolve, reject) => {
-    // 🔇 Headless / Docker / CI mode
     if (!ENABLE_AUDIO) {
-      logger.info(`🔇 Audio playback disabled (ENABLE_AUDIO_PLAYBACK=false)`);
+      logger.info(
+        `🔇 Audio playback disabled (ENABLE_AUDIO_PLAYBACK not true)`,
+      );
       return resolve();
     }
 
-    audioPlayer.play(filePath, (err) => {
-      if (err) {
-        logger.error(`🔇 Audio playback failed: ${err.message}`);
-        return reject(err);
-      }
+    logger.info(`🎵 Playing audio: ${filePath}`);
 
-      logger.success(`🔊 Audio played: ${filePath}`);
-      resolve();
-    });
+    // Windows-safe
+    audioPlayer.play(
+      filePath,
+      { afplay: [], mpg123: [], mplayer: [] },
+      (err) => {
+        if (err) {
+          logger.error(`❌ Audio playback failed: ${err.message}`);
+          return reject(err);
+        }
+
+        logger.success(`🔊 Audio played successfully`);
+        resolve();
+      },
+    );
   });
 }

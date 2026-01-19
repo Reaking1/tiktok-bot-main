@@ -1,43 +1,56 @@
-import { isOnCooldown } from "../utils/cooldown.js";
 import { logger } from "../utils/logger.js";
 import { speak } from "../services/ttsService.js";
+import { recordGift } from "../utils/userStore.js";
+import { isOnCooldown } from "../utils/cooldown.js";
 
 /**
- * GiftHandler encapsulates all gift logic
+ * GiftHandler encapsulates ALL gift logic
  */
 class GiftHandler {
   constructor(options = {}) {
-    this.tts = options.ttsService || { playTTS: speak };
-    this.cooldownSeconds = options.giftCooldown ?? 5; // seconds
+    this.cooldownSeconds = options.giftCooldown ?? 8; // seconds
   }
 
   /**
    * Handle TikTok gift event
-   * @param {object} data
+   * @param {object} user - normalized user from userStore
+   * @param {object} data - raw TikTok gift event
    */
-  async handleGift(data) {
+  async handleGift(user, data) {
     try {
-      const username = data?.uniqueId || "Unknown user";
-      const giftName = data?.giftName || "Gift";
-      const repeatEnd = data?.repeatEnd ?? false;
-      const finalCount = data?.repeatCount ?? 1;
+      const giftName = data?.giftName || "a gift";
+      const diamondCount = data?.diamondCount || 1;
+      const repeatEnd = data?.repeatEnd ?? true;
 
       // Only react when gift combo is finished
       if (!repeatEnd) return;
 
-      // Cooldown protection
-      if (isOnCooldown(username, this.cooldownSeconds)) {
-        logger.info(`Cooldown active for ${username}, skipping gift.`);
+      // Track gift value per user
+      recordGift(user, diamondCount);
+
+      // Cooldown per USER (not username string)
+      if (isOnCooldown(user.id, this.cooldownSeconds)) {
+        logger.info(`🎁 Gift cooldown active for ${user.name}`);
         return;
       }
 
-      logger.info(`🎁 Gift from ${username}: ${giftName} x${finalCount}`);
+      logger.event(
+        "GIFT",
+        `${user.name} sent ${giftName} (${diamondCount} coins)`,
+      );
 
-      const message = `Thank you ${username} for the ${giftName}! You are awesome!`;
+      // ---- TTS RULES ----
+      // Only speak for meaningful gifts
+      if (diamondCount < 10) return;
 
-      await this.tts.playTTS(message);
+      const message =
+        diamondCount >= 100
+          ? `🔥 Massive thanks ${user.name} for ${diamondCount} coins!`
+          : `Thank you ${user.name} for the ${giftName}!`;
+
+      await speak(message);
     } catch (err) {
-      logger.error("Failed to process gift", err);
+      logger.error("GiftHandler failed", err);
     }
   }
 }
@@ -51,9 +64,9 @@ const giftHandler = new GiftHandler();
 /**
  * This is what index.js imports
  */
-export async function onGift(data) {
-  return giftHandler.handleGift(data);
+export async function onGift(user, data) {
+  return giftHandler.handleGift(user, data);
 }
 
-// Optional named export if you ever need the class
+// Optional named export
 export { GiftHandler };
