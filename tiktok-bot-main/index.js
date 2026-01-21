@@ -6,6 +6,9 @@ import { logger } from "./src/utils/logger.js";
 import { onChat } from "./src/bot/chatHandler.js";
 import { onGift } from "./src/bot/giftHandler.js";
 import { onLike } from "./src/bot/likeHandler.js";
+import { onViewer } from "./src/bot/viewerHandler.js";
+import { onFollow } from "./src/bot/followerHandler.js";
+import { onSubscribe } from "./src/bot/subscriberHandler.js";
 
 const tiktokLive = new TikTokLiveConnection(config.tiktokUsername, {
   enableWebsocketFallback: true,
@@ -27,3 +30,12 @@ tiktokLive.on("like", onLike);
 
 // Gift
 tiktokLive.on("gift", onGift);
+
+//Viwer
+tiktokLive.on("roomUser", onViewer);
+
+//Follower
+tiktokLive.on("follow", onFollow);
+
+//Subscriber
+tiktokLive.on("subscriber", onSubscribe);
