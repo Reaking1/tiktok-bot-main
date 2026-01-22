@@ -13,6 +13,9 @@ export function markViewer(id) {
   audience.viewers.add(id);
 }
 
+export function resetViewers() {
+  viewers.clear();
+}
 /*------FOLLOWERS---------*/
 export function hasFollowed(id) {
   return audience.followers.has(id);
