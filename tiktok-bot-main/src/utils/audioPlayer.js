@@ -1,37 +1,29 @@
-import player from "play-sound";
+import fs from "fs";
+import path from "path";
 import { logger } from "./logger.js";
 
-const audioPlayer = player();
-const ENABLE_AUDIO = process.env.ENABLE_AUDIO_PLAYBACK === "true"; // must explicitly be "true"
+const OBS_AUDIO_PATH =
+  process.env.OBS_AUDIO_PATH || "C:/tiktok-bot/audio/latest.mp3";
 
 /**
- * Play audio file
+ * Send audio to OBS by overwriting the watched file
  * @param {string} filePath
  */
-export function playAudio(filePath) {
-  return new Promise((resolve, reject) => {
-    if (!ENABLE_AUDIO) {
-      logger.info(
-        `🔇 Audio playback disabled (ENABLE_AUDIO_PLAYBACK not true)`,
-      );
-      return resolve();
+export async function playAudio(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      logger.error(`❌ Audio file not found: ${filePath}`);
+      return;
     }
 
-    logger.info(`🎵 Playing audio: ${filePath}`);
+    // Ensure directory exists
+    fs.mkdirSync(path.dirname(OBS_AUDIO_PATH), { recursive: true });
 
-    // Windows-safe
-    audioPlayer.play(
-      filePath,
-      { afplay: [], mpg123: [], mplayer: [] },
-      (err) => {
-        if (err) {
-          logger.error(`❌ Audio playback failed: ${err.message}`);
-          return reject(err);
-        }
+    // Copy TTS file → OBS watched file
+    fs.copyFileSync(filePath, OBS_AUDIO_PATH);
 
-        logger.success(`🔊 Audio played successfully`);
-        resolve();
-      },
-    );
-  });
+    logger.success(`🎧 Sent audio to OBS: ${OBS_AUDIO_PATH}`);
+  } catch (err) {
+    logger.error(`❌ OBS audio handoff failed: ${err.message}`);
+  }
 }
